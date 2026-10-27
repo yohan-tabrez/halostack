@@ -33,7 +33,7 @@
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^25.3.5",
-    "@types/ssh2": "^1.15.5",
+    "@types/ssh2": "^1.15.6",
     "@types/ws": "^8.18.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
