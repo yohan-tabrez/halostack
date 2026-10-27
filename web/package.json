@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",
-    "@base-ui/react": "^1.2.0",
+    "@base-ui/react": "^1.9.0",
     "@halostack/crypto": "file:../packages/crypto",
     "@halostack/db": "file:../packages/db",
     "@opentelemetry/api": "^1.10.0",
