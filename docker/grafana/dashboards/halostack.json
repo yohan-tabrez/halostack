@@ -1,0 +1,35 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "panels": [
+    {
+      "title": "SSH Jobs",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(halostack_ssh_jobs_total[5m])) by (status)",
+          "legendFormat": "{{status}}"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "title": "SSH Pool Size",
+      "type": "stat",
+      "targets": [{ "expr": "halostack_ssh_pool_size" }],
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 }
+    },
+    {
+      "title": "Active PTY Sessions",
+      "type": "stat",
+      "targets": [{ "expr": "halostack_pty_sessions_active" }],
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 }
+    }
+  ],
+  "schemaVersion": 39,
+  "title": "HALOStack Overview",
+  "uid": "halostack-overview",
+  "version": 1
+}

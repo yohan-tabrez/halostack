@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'ssh-agent'
+    static_configs:
+      - targets: ['halostack-ssh-agent:9090'] 

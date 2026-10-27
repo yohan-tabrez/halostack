@@ -1,0 +1,165 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: halostack-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-halostack}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-halostack}
+    # Not published to the host — internal Docker network only.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./packages/db/drizzle/0000_initial.sql:/docker-entrypoint-initdb.d/001_initial.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-halostack} -d ${POSTGRES_DB:-halostack}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  pgbouncer:
+    image: edoburu/pgbouncer:1.22.1-p0
+    container_name: halostack-pgbouncer
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-halostack}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-halostack}
+      AUTH_TYPE: scram-sha-256
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 200
+      DEFAULT_POOL_SIZE: 20
+    # Not published to the host — internal Docker network only.
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: valkey/valkey:8
+    container_name: halostack-redis
+    # Not published to the host — internal Docker network only.
+    volumes:
+      - redis_data:/data
+    command: valkey-server --appendonly yes --requirepass ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    restart: unless-stopped
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: halostack-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: halostack-grafana
+    ports:
+      - "8001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in .env}
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.67
+    container_name: halostack-jaeger
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.120.0
+    container_name: halostack-otel
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./docker/otel/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4318:4318"
+    depends_on:
+      - jaeger
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    container_name: halostack-web
+    ports:
+      - "8040:3000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-halostack}:${POSTGRES_PASSWORD}@pgbouncer:5432/${POSTGRES_DB:-halostack}
+      AUTH_SECRET: ${AUTH_SECRET:?Set AUTH_SECRET in .env}
+      AUTH_URL: ${AUTH_URL:-http://localhost:8040}
+      INTERNAL_AGENT_SECRET: ${INTERNAL_AGENT_SECRET:?Set INTERNAL_AGENT_SECRET in .env}
+      WS_TOKEN_SECRET: ${WS_TOKEN_SECRET:?Set WS_TOKEN_SECRET in .env}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      MASTER_SECRET: ${MASTER_SECRET:?Set MASTER_SECRET in .env}
+      MASTER_SECRET_PREVIOUS: ${MASTER_SECRET_PREVIOUS:-}
+      BLIND_INDEX_SECRET: ${BLIND_INDEX_SECRET:?Set BLIND_INDEX_SECRET in .env}
+      WS_PUBLIC_URL: ${WS_PUBLIC_URL:-ws://localhost:8080}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+    depends_on:
+      - pgbouncer
+      - redis
+      - ssh-agent
+    restart: unless-stopped
+
+  ssh-agent:
+    build:
+      context: .
+      dockerfile: ssh-agent/Dockerfile
+    container_name: halostack-ssh-agent
+    ports:
+      - "8080:8080"
+      - "9091:9090"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-halostack}:${POSTGRES_PASSWORD}@pgbouncer:5432/${POSTGRES_DB:-halostack}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      MASTER_SECRET: ${MASTER_SECRET:?Set MASTER_SECRET in .env}
+      MASTER_SECRET_PREVIOUS: ${MASTER_SECRET_PREVIOUS:-}
+      BLIND_INDEX_SECRET: ${BLIND_INDEX_SECRET:?Set BLIND_INDEX_SECRET in .env}
+      INTERNAL_AGENT_SECRET: ${INTERNAL_AGENT_SECRET:?Set INTERNAL_AGENT_SECRET in .env}
+      WS_TOKEN_SECRET: ${WS_TOKEN_SECRET:?Set WS_TOKEN_SECRET in .env}
+      SSH_CONCURRENCY: ${SSH_CONCURRENCY:-10}
+      SSH_POOL_IDLE_TIMEOUT_MS: ${SSH_POOL_IDLE_TIMEOUT_MS:-300000}
+      JOB_TIMEOUT_MS: ${JOB_TIMEOUT_MS:-60000}
+      STDOUT_CAP_BYTES: ${STDOUT_CAP_BYTES:-262144}
+      HEALTH_CHECK_INTERVAL_MS: ${HEALTH_CHECK_INTERVAL_MS:-300000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+    depends_on:
+      - pgbouncer
+      - redis
+    restart: unless-stopped
+
+  # Optional: docker compose --profile ops up bullboard
+  bullboard:
+    profiles: ["ops"]
+    image: deadly0/bull-board:latest
+    container_name: halostack-bullboard
+    ports:
+      - "8002:3000"
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -1,0 +1,12 @@
+# Optional host port publishing for local development outside Docker for web/agent.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.devports.yml up -d
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+  pgbouncer:
+    ports:
+      - "6432:5432"
+  redis:
+    ports:
+      - "6379:6379"

@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build / cache
+.next/
+out/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Logs & debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+
+# Test / tooling
+.turbo/
+.vercel/
+*.local
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Misc backups
+*.bak
+*.bak-*
+.env.bak*

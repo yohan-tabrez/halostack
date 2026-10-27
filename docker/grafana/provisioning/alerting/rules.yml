@@ -1,0 +1,185 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: halostack
+    folder: HALOStack
+    interval: 1m
+    rules:
+      - uid: hs_agent_down
+        title: SSH agent down
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              expr: up{job="ssh-agent"} == 0
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+              datasource:
+                type: __expr__
+                uid: __expr__
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              refId: C
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    type: last
+                    params: []
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+        noDataState: Alerting
+        execErrState: Error
+        for: 2m
+        annotations:
+          summary: Prometheus cannot scrape the ssh-agent metrics endpoint.
+        labels:
+          severity: critical
+
+      - uid: hs_job_fail_rate
+        title: High SSH job failure rate
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              expr: >
+                (
+                  sum(rate(halostack_ssh_jobs_total{status="failed"}[5m]))
+                  /
+                  clamp_min(sum(rate(halostack_ssh_jobs_total[5m])), 0.001)
+                ) > 0.25
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+              datasource:
+                type: __expr__
+                uid: __expr__
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              refId: C
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    type: last
+                    params: []
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: More than 25% of SSH jobs are failing over 5m.
+        labels:
+          severity: warning
+
+      - uid: hs_ssh_pool_empty
+        title: SSH connection pool empty under load
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              expr: >
+                halostack_ssh_pool_size == 0
+                and sum(rate(halostack_ssh_jobs_total[5m])) > 0.05
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+              datasource:
+                type: __expr__
+                uid: __expr__
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              refId: C
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    type: last
+                    params: []
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: Jobs are flowing but the SSH pool gauge is zero.
+        labels:
+          severity: warning

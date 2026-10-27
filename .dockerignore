@@ -1,0 +1,14 @@
+node_modules
+**/node_modules
+.next
+**/.next
+.git
+.github
+*.log
+.env
+.env.*
+web/e2e
+web/playwright-report
+web/test-results
+ssh-agent/dist
+packages/**/dist

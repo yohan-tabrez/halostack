@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" fill="none" role="img" aria-label="HALOStack">
+  <!-- Mark -->
+  <g transform="translate(0,0)">
+    <path
+      d="M18.5 14.2A22 22 0 1 1 14.2 18.5"
+      stroke="url(#haloGradient)"
+      stroke-width="5.5"
+      stroke-linecap="round"
+    />
+    <rect x="20" y="21" width="24" height="6.5" rx="3.25" fill="#22D3EE"/>
+    <rect x="20" y="30.75" width="24" height="6.5" rx="3.25" fill="#2563EB"/>
+    <rect x="20" y="40.5" width="24" height="6.5" rx="3.25" fill="#2563EB"/>
+  </g>
+  <!-- Wordmark -->
+  <text
+    x="78"
+    y="42"
+    font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    font-size="28"
+    font-weight="700"
+    letter-spacing="-0.04em"
+    fill="#0F172A"
+  >HALOStack</text>
+  <defs>
+    <linearGradient id="haloGradient" x1="14" y1="14" x2="50" y2="50" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22D3EE"/>
+      <stop offset="0.45" stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#1D4ED8"/>
+    </linearGradient>
+  </defs>
+</svg>

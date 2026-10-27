@@ -1,0 +1,78 @@
+name: HALOStack CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: halostack
+          POSTGRES_PASSWORD: halostack
+          POSTGRES_DB: halostack
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: valkey/valkey:8
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build shared packages
+        run: |
+          npm run build --workspace=@halostack/crypto
+          npm run build --workspace=@halostack/db
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Apply migrations
+        env:
+          DATABASE_URL: postgresql://halostack:halostack@localhost:5432/halostack
+        run: node scripts/migrate.js
+
+      - name: Web lint and typecheck
+        working-directory: web
+        run: |
+          npm run lint
+          npx tsc --noEmit
+
+      - name: SSH Agent typecheck
+        working-directory: ssh-agent
+        run: npx tsc --noEmit
+
+      - name: Install Playwright
+        working-directory: web
+        run: npx playwright install chromium
+
+      - name: Build web
+        working-directory: web
+        env:
+          DATABASE_URL: postgresql://halostack:halostack@localhost:5432/halostack
+          AUTH_SECRET: ci-auth-secret-minimum-32-characters-long
+        run: npm run build
+
+      - name: Playwright smoke test
+        working-directory: web
+        run: npm run test:e2e

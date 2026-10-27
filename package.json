@@ -1,0 +1,28 @@
+{
+  "name": "halostack",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Centralized SSH server management",
+  "author": "Yohantabrez <yohantabrez@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yohan-tabrez/halostack.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yohan-tabrez/halostack/issues"
+  },
+  "homepage": "https://github.com/yohan-tabrez/halostack#readme",
+  "workspaces": [
+    "packages/*",
+    "web",
+    "ssh-agent"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "db:migrate": "node scripts/migrate.js"
+  },
+  "devDependencies": {
+    "dotenv": "^17.4.2"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@halostack/db",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "node ../../scripts/migrate.js",
+    "db:push": "drizzle-kit push"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.44.2",
+    "postgres": "^3.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.37",
+    "drizzle-kit": "^0.31.4",
+    "typescript": "^5.9.3"
+  }
+}
