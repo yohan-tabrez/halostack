@@ -9,7 +9,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@types/node": "^20.19.37",
+    "@types/node": "^26.6.5",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   }
