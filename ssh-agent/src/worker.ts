@@ -600,18 +600,20 @@ export async function scheduleHealthChecks() {
   const interval = Number(process.env.HEALTH_CHECK_INTERVAL_MS ?? 300000)
 
   for (const server of allServers) {
-    await healthQueue.add(
-      'health-check',
+    await healthQueue.upsertJobScheduler(
+      `health-repeat-${server.id}`,
+      { every: interval },
       {
-        job_id: `health-${server.id}`,
-        server_id: server.id,
-        command: 'uname -a',
-      },
-      {
-        repeat: { every: interval },
-        jobId: `health-repeat-${server.id}`,
-        removeOnComplete: true,
-        removeOnFail: 100,
+        name: 'health-check',
+        data: {
+          job_id: `health-${server.id}`,
+          server_id: server.id,
+          command: 'uname -a',
+        },
+        opts: {
+          removeOnComplete: true,
+          removeOnFail: 100,
+        },
       }
     )
   }

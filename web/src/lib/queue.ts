@@ -67,14 +67,16 @@ export const sshQueue = sshCommandsQueue
 const healthInterval = Number(process.env.HEALTH_CHECK_INTERVAL_MS ?? 300000)
 
 export async function scheduleServerHealth(serverId: string) {
-  await getHealthQueue().add(
-    'health-check',
-    { job_id: `health-${serverId}`, server_id: serverId, command: 'uname -a' },
+  await getHealthQueue().upsertJobScheduler(
+    `health-repeat-${serverId}`,
+    { every: healthInterval },
     {
-      repeat: { every: healthInterval },
-      jobId: `health-repeat-${serverId}`,
-      removeOnComplete: true,
-      removeOnFail: 100,
+      name: 'health-check',
+      data: { job_id: `health-${serverId}`, server_id: serverId, command: 'uname -a' },
+      opts: {
+        removeOnComplete: true,
+        removeOnFail: 100,
+      },
     }
   )
 }

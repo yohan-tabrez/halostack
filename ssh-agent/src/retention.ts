@@ -14,18 +14,16 @@ export async function startRetentionJob() {
   const queue = new Queue('maintenance', { connection: redis as never })
   const retentionMonths = Number(process.env.JOB_RETENTION_MONTHS ?? 6)
 
-  // Rename left the old repeatable key behind (BullMQ keys by name+pattern).
-  for (const job of await queue.getRepeatableJobs()) {
-    if (job.name === 'drop-old-partitions') await queue.removeRepeatableByKey(job.key)
-  }
+  // Drop renamed legacy scheduler id if present (BullMQ v6 Job Schedulers).
+  await queue.removeJobScheduler('drop-old-partitions').catch(() => undefined)
 
-  await queue.add(
-    'purge-old-history',
-    { retentionMonths },
+  await queue.upsertJobScheduler(
+    'retention-monthly',
+    { pattern: '0 3 1 * *' },
     {
-      repeat: { pattern: '0 3 1 * *' },
-      jobId: 'retention-monthly',
-      removeOnComplete: true,
+      name: 'purge-old-history',
+      data: { retentionMonths },
+      opts: { removeOnComplete: true },
     }
   )
 
