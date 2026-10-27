@@ -23,6 +23,7 @@
     "db:migrate": "node scripts/migrate.js"
   },
   "devDependencies": {
+    "babel-plugin-react-compiler": "^1.0.0",
     "dotenv": "^17.4.2"
   }
 }
