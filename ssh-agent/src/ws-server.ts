@@ -10,7 +10,10 @@ import { ptySessionsActive } from './metrics'
 import { addJobSubscriber, validateSessionToken } from './lib/job-ws'
 
 const logger = pino({ level: process.env.LOG_LEVEL || 'info' })
-const redis = new Redis(process.env.REDIS_URL || 'redis://127.0.0.1:6379')
+const redis = new Redis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
+  // Keep RESP2 for BullMQ Lua/reply compatibility with ioredis v6.
+  protocol: 2,
+})
 const MASTER_SECRET = process.env.MASTER_SECRET || ''
 const MASTER_SECRET_PREVIOUS = process.env.MASTER_SECRET_PREVIOUS
 const ptyIdleTimeoutMs = Number(process.env.PTY_IDLE_TIMEOUT_MS ?? 900000) // 15 min

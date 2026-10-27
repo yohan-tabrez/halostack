@@ -7,6 +7,8 @@ const logger = pino({ level: process.env.LOG_LEVEL || 'info' })
 
 export async function startRetentionJob() {
   const redis = new Redis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
+    // Keep RESP2 for BullMQ Lua/reply compatibility with ioredis v6.
+    protocol: 2,
     maxRetriesPerRequest: null,
   })
   const queue = new Queue('maintenance', { connection: redis as never })

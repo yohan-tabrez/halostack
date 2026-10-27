@@ -4,6 +4,8 @@ import type { ClientChannel } from 'ssh2'
 // Web publishes job-abort:<jobId> (and chain-abort:<runId> with the same job ids).
 // Only the process holding the in-flight stream has an entry here.
 const sub = new Redis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
+  // Keep RESP2 for BullMQ Lua/reply compatibility with ioredis v6.
+  protocol: 2,
   maxRetriesPerRequest: null,
 })
 

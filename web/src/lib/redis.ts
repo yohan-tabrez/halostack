@@ -20,6 +20,8 @@ export function getRedis(): Redis {
   }
   if (!client) {
     client = new Redis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
+      // Keep RESP2 for BullMQ Lua/reply compatibility with ioredis v6.
+      protocol: 2,
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
       lazyConnect: true,

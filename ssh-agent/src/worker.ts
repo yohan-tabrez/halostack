@@ -23,6 +23,8 @@ import { withSpan } from './otel'
 
 const logger = pino({ level: process.env.LOG_LEVEL || 'info' })
 const redisConnection = new Redis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
+  // Keep RESP2 for BullMQ Lua/reply compatibility with ioredis v6.
+  protocol: 2,
   maxRetriesPerRequest: null,
 })
 
@@ -582,6 +584,8 @@ setInterval(() => {
 // Immediate kick from the web tier when a run is created (a subscriber connection
 // can't run normal commands, so it's separate from redisConnection).
 const chainSub = new Redis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
+  // Keep RESP2 for BullMQ Lua/reply compatibility with ioredis v6.
+  protocol: 2,
   maxRetriesPerRequest: null,
 })
 chainSub.subscribe('chain-advance')

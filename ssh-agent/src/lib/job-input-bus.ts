@@ -5,6 +5,8 @@ import Redis from 'ioredis'
 // has a handler registered. A subscribed connection can't run normal commands, so
 // this owns its own connection separate from the worker's.
 const sub = new Redis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
+  // Keep RESP2 for BullMQ Lua/reply compatibility with ioredis v6.
+  protocol: 2,
   maxRetriesPerRequest: null,
 })
 const handlers = new Map<string, (response: string) => void>()
